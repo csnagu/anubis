@@ -21,7 +21,7 @@ today_up = soup.find(id='login_CurrentUploadThroughput')
 traff_info = list()
 
 # 通信量を取得した日時
-now_time = datetime.now().strftime("%Y/%m/%d $H:%M:%S")
+now_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
 # 上り下りの通信量
 traff_info.append(today_down.get_text())
@@ -39,7 +39,7 @@ for i, traff in enumerate(traff_info):
         traff_info[i] = traff_num
     traff_info[i] = round(traff_info[i], 2)
 
-traff_info.append(sum(traff_info))
+traff_info.append(round(sum(traff_info), 2))
 traff_info.append(now_time)
 
 with open('traffics.csv', 'a') as f:
