@@ -7,7 +7,9 @@ import re
 url = 'http://speedwifi.home/html/login.htm'
 
 # Selenium settings
-driver = webdriver.Chrome()
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
 
 driver.get(url)
 html = driver.page_source.encode('utf-8')
@@ -20,19 +22,17 @@ today_up = soup.find(id='login_CurrentUploadThroughput')
 
 traff_info = list()
 
-# 通信量を取得した日時
+# date of get traffics e.g.) 2018/05/25 20:03:23
 now_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-
-# 上り下りの通信量
 traff_info.append(today_down.get_text())
 traff_info.append(today_up.get_text())
 
 for i, traff in enumerate(traff_info):
-    # 数字のみ取得する正規表現
+    # regex for get figures only
     regex = r'([0-9]+\.?[0-9]*)'
     traff_num = float(re.match(regex, traff).group())
 
-    # MB表記のものをGBの単位へ変換する
+    # convert MB to GB
     if re.search('MB', traff):
         traff_info[i] = traff_num / 1000.0
     else:
