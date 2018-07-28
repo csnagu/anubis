@@ -1,7 +1,7 @@
-from bs4 import BeautifulSoup
 from datetime import datetime
 from selenium import webdriver
 import csv
+import os
 import re
 
 url = 'http://speedwifi.home/html/login.htm'
@@ -12,20 +12,16 @@ options.add_argument('--headless')
 driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
 
 driver.get(url)
-html = driver.page_source.encode('utf-8')
+today_down = driver.find_element_by_id('login_CurrentDownloadThroughput').text
+today_up = driver.find_element_by_id('login_CurrentUploadThroughput').text
 driver.quit()
-
-# parse the response
-soup = BeautifulSoup(html, 'html.parser')
-today_down = soup.find(id='login_CurrentDownloadThroughput')
-today_up = soup.find(id='login_CurrentUploadThroughput')
 
 traff_info = list()
 
 # date of get traffics e.g.) 2018/05/25 20:03:23
 now_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-traff_info.append(today_down.get_text())
-traff_info.append(today_up.get_text())
+traff_info.append(today_down)
+traff_info.append(today_up)
 
 for i, traff in enumerate(traff_info):
     # regex for get figures only
@@ -42,6 +38,8 @@ for i, traff in enumerate(traff_info):
 traff_info.append(round(sum(traff_info), 2))
 traff_info.append(now_time)
 
-with open('traffics.csv', 'a') as f:
+cwd = os.path.dirname(os.path.abspath(__file__))
+csv_path = os.path.join(cwd, 'traffics.csv')
+with open(csv_path, 'a') as f:
     write = csv.writer(f, lineterminator='\n')
     write.writerow(traff_info)
