@@ -30,7 +30,8 @@ for i, traff in enumerate(traff_info):
     traff_num = float(re.match(regex, traff).group())
 
     # convert MB to GB
-    if re.search('MB', traff):
+    # I will probably not use 10GB in a day
+    if traff_num > 10.0:
         traff_info[i] = traff_num / 1000.0
     else:
         traff_info[i] = traff_num
