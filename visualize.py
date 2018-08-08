@@ -3,6 +3,7 @@ import datetime
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 
 app = dash.Dash()
 
@@ -24,7 +25,7 @@ one_day_traffics_date = []
 for i in range(len(date)):
     if i == len(date)-1:
         one_day_traffics.append(max(current_date_traffic))
-        one_day_traffics_date.append(current_date)
+        one_day_traffics_date.append(datetime.datetime.strptime(date[i], "%Y/%m/%d %H:%M:%S").date())
         break
 
     # 文字列から日付型へ変換
@@ -45,6 +46,8 @@ if len(one_day_traffics) >= 3:
     latest_three_days_traffic = sum(one_day_traffics[-3:])
 else:
     latest_three_days_traffic = sum(one_day_traffics)
+latest_three_days_traffic = round(latest_three_days_traffic, 3)
+datetime = [datetime.datetime.strptime(x, "%Y/%m/%d %H:%M:%S").strftime('%d日 %H時') for x in date]
 
 app.layout = html.Div(children=[
     html.H1('通信量'),
@@ -54,7 +57,7 @@ app.layout = html.Div(children=[
         id='per_hour',
         figure={
             'data':[
-                {'x':date, 'y':traffics}
+                {'x':datetime, 'y':traffics}
             ]
         }
     ),
@@ -64,7 +67,10 @@ app.layout = html.Div(children=[
         figure={
             'data':[
                 {'x': one_day_traffics_date, 'y': one_day_traffics}
-            ]
+            ],
+            'layout':go.Layout(
+                xaxis={'tickformat': '%_m/%-d', 'dtick': 'D'}
+            )
         }
     )
 ])
