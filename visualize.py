@@ -23,6 +23,8 @@ one_day_traffics = []
 one_day_traffics_date = []
 for i in range(len(date)):
     if i == len(date)-1:
+        one_day_traffics.append(max(current_date_traffic))
+        one_day_traffics_date.append(current_date)
         break
 
     # 文字列から日付型へ変換
@@ -38,10 +40,16 @@ for i in range(len(date)):
         current_date_traffic = []
 print(one_day_traffics, '   ', one_day_traffics_date)
 
+latest_three_days_traffic = 0
+if len(one_day_traffics) >= 3:
+    latest_three_days_traffic = sum(one_day_traffics[-3:])
+else:
+    latest_three_days_traffic = sum(one_day_traffics)
 
 app.layout = html.Div(children=[
     html.H1('通信量'),
 
+    html.H2('直近3日間の通信量：{} GB'.format(latest_three_days_traffic)),
     dcc.Graph(
         id='per_hour',
         figure={
