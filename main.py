@@ -17,12 +17,19 @@ today_down = driver.find_element_by_id('login_CurrentDownloadThroughput').text
 today_up = driver.find_element_by_id('login_CurrentUploadThroughput').text
 driver.quit()
 
-traff_info = list()
+traff_info = []
 
 # date of get traffics e.g.) 2018/05/25 20:03:23
 now_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 traff_info.append(today_down)
 traff_info.append(today_up)
+
+# log
+cwd = os.path.dirname(os.path.abspath(__file__))
+csv_path = os.path.join(cwd, 'log.csv')
+with open(csv_path, 'a') as f:
+    write = csv.writer(f, lineterminator='\n')
+    write.writerow(traff_info)
 
 for i, traff in enumerate(traff_info):
     # regex for get figures only
@@ -30,8 +37,9 @@ for i, traff in enumerate(traff_info):
     traff_num = float(re.match(regex, traff).group())
 
     # convert MB to GB
-    # I will probably not use 10GB in a day
-    if traff_num > 10.0:
+    if re.search('KB', traff):
+        traff_info[i] = traff_num / 1000000.0
+    else if re.search('MB', traff):
         traff_info[i] = traff_num / 1000.0
     else:
         traff_info[i] = traff_num
