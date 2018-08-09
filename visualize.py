@@ -11,12 +11,7 @@ traffics = list()
 date = list()
 with open("traffics.csv", "r") as f:
     for x in csv.reader(f, delimiter=','):
-        # 1日で10GB以上使うことはないので異常値として扱い、
-        # trafficのみ直前のデータを使用する
-        if float(x[2]) < 10.0:
-            traffics.append(float(x[2]))
-        else:
-            traffics.append(traffics[-1])
+        traffics.append(float(x[2]))
         date.append(x[-1])
 
 current_date_traffic = []
