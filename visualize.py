@@ -22,11 +22,8 @@ for i in range(len(date)):
     # 年月日のみを取得する
     current_date = datetime.datetime.strptime(date[i], "%Y/%m/%d %H:%M:%S")
     if i == len(date)-1:
-        # yesterday = current_date - datetime.timedelta(days=1)
-        # one_day_traffics_date.append(yesterday.date())
         one_day_traffics_date.append(current_date.date())
         one_day_traffics.append(traffics[-1])
-        # one_day_traffics.append(0)
         break
 
     # 日付のみを取得し、1日分のデータ通信量を求める
@@ -53,18 +50,35 @@ app.layout = html.Div(children=[
     html.H1('通信量'),
 
     html.H2('直近3日間の通信量：{} GB'.format(latest_three_days_traffic)),
-    dcc.Graph(
-        id='per_hour',
-        figure={
+
+    html.Div([
+        html.Label('表示するグラフの選択'),
+        dcc.Dropdown(
+            id='change-graph',
+            options=[
+                {'label':'hourly graph', 'value':'hourly'},
+                {'label':'daily graph', 'value':'daily'}
+            ],
+            value='hourly'
+        )
+    ],
+    style={'width':'50%'}),
+
+    dcc.Graph(id='traffic-graph')
+])
+
+@app.callback(
+    dash.dependencies.Output('traffic-graph', 'figure'),
+    [dash.dependencies.Input('change-graph', 'value')])
+def update_graph(selected_graph):
+    if selected_graph == 'hourly':
+        return {
             'data':[
                 {'x':datetime, 'y':traffics}
             ]
         }
-    ),
-
-    dcc.Graph(
-        id='per_day',
-        figure={
+    if selected_graph == 'daily':
+        return {
             'data':[
                 {'x': one_day_traffics_date, 'y': one_day_traffics}
             ],
@@ -72,7 +86,6 @@ app.layout = html.Div(children=[
                 xaxis={'tickformat': '%_m/%-d', 'dtick': 'D'}
             )
         }
-    )
-])
 
-app.run_server()
+if __name__ == '__main__':
+    app.run_server()
