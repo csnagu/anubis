@@ -22,7 +22,10 @@ for i in range(len(date)):
     # 年月日のみを取得する
     current_date = datetime.datetime.strptime(date[i], "%Y/%m/%d %H:%M:%S")
     if i == len(date)-1:
-        one_day_traffics_date.append(current_date.date())
+        if current_date.hour != 0:
+            one_day_traffics_date.append(current_date.date())
+        else:
+            one_day_traffics_date.append(datetime.datetime.strptime(date[i-1], "%Y/%m/%d %H:%M:%S").date())
         one_day_traffics.append(traffics[-1])
         break
 
@@ -38,18 +41,23 @@ for i in range(len(date)):
         one_day_traffics_date.append(today.date())
         current_date_traffic = []
 
-latest_three_days_traffic = 0
+three_days_traffic_from_the_day_before = sum(one_day_traffics)
+latest_three_days_traffic = sum(one_day_traffics)
+
+if len(one_day_traffics) >= 4:
+    three_days_traffic_from_the_day_before = sum(one_day_traffics[-4:-1])
 if len(one_day_traffics) >= 3:
     latest_three_days_traffic = sum(one_day_traffics[-3:])
-else:
-    latest_three_days_traffic = sum(one_day_traffics)
+
+three_days_traffic_from_the_day_before = round(three_days_traffic_from_the_day_before, 3)
 latest_three_days_traffic = round(latest_three_days_traffic, 3)
 datetime = [datetime.datetime.strptime(x, "%Y/%m/%d %H:%M:%S").strftime('%d日 %H時') for x in date]
 
 app.layout = html.Div(children=[
     html.H1('通信量'),
 
-    html.H2('直近3日間の通信量：{} GB'.format(latest_three_days_traffic)),
+    html.Div('直近3日間の通信量：{} GB'.format(latest_three_days_traffic)),
+    html.Div('前日から3日間の通信量：{} GB'.format(three_days_traffic_from_the_day_before)),
 
     html.Div([
         html.Label('表示するグラフの選択'),
