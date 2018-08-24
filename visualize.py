@@ -7,12 +7,16 @@ import plotly.graph_objs as go
 
 app = dash.Dash()
 
-traffics = []
-date = []
-with open("traffics.csv", "r") as f:
-    for x in csv.reader(f, delimiter=','):
-        traffics.append(float(x[2]))
-        date.append(x[-1])
+def get_traffic_and_date(filename):
+    traffic = []
+    date = []
+    with open(filename, "r") as f:
+        for x in csv.reader(f, delimiter=','):
+            traffic.append(float(x[2]))
+            date.append(x[-1])
+    return traffic, date
+
+traffic, date = get_traffic_and_date('traffics.csv')
 
 current_date_traffic = []
 one_day_traffics = []
@@ -26,14 +30,14 @@ for i in range(len(date)):
             one_day_traffics_date.append(current_date.date())
         else:
             one_day_traffics_date.append(datetime.datetime.strptime(date[i-1], "%Y/%m/%d %H:%M:%S").date())
-        one_day_traffics.append(traffics[-1])
+        one_day_traffics.append(traffic[-1])
         break
 
     # 日付のみを取得し、1日分のデータ通信量を求める
     # 一日のスタートはAM02:00からとする（L01の仕様っぽい）
-    day_time = datetime.time(2, 0, 0, 0)
+    day_time = datetime.time(4, 0, 0, 0)
     if current_date.hour != day_time.hour:
-        current_date_traffic.append(traffics[i])
+        current_date_traffic.append(traffic[i])
     else:
         one_day_traffics.append(max(current_date_traffic))
         # １日の通信量はAM02:00にリセットされるので日付を１日戻す
@@ -82,7 +86,7 @@ def update_graph(selected_graph):
     if selected_graph == 'hourly':
         return {
             'data':[
-                {'x':datetime, 'y':traffics}
+                {'x':datetime, 'y':traffic}
             ]
         }
     if selected_graph == 'daily':
