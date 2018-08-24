@@ -1,57 +1,56 @@
-import csv
 import datetime
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+import pandas as pd
 
-app = dash.Dash()
+def str2date(date):
+    return datetime.datetime.strptime(date, "%Y/%m/%d %H:%M:%S")
 
-traffics = []
-date = []
-with open("traffics.csv", "r") as f:
-    for x in csv.reader(f, delimiter=','):
-        traffics.append(float(x[2]))
-        date.append(x[-1])
+df = pd.read_csv('traffics.csv', names=('down', 'up', 'updown', 'date'))
 
 current_date_traffic = []
-one_day_traffics = []
-one_day_traffics_date = []
-for i in range(len(date)):
+one_day_traffic = []
+one_day_traffic_date = []
+for index, row in df.iterrows():
     # 文字列から日付型へ変換
     # 年月日のみを取得する
-    current_date = datetime.datetime.strptime(date[i], "%Y/%m/%d %H:%M:%S")
-    if i == len(date)-1:
-        if current_date.hour != 0:
-            one_day_traffics_date.append(current_date.date())
-        else:
-            one_day_traffics_date.append(datetime.datetime.strptime(date[i-1], "%Y/%m/%d %H:%M:%S").date())
-        one_day_traffics.append(traffics[-1])
-        break
+    current_date = str2date(row['date'])
 
+    if index == len(df) - 1:
+        if current_date.hour != 0:
+            one_day_traffic_date.append(current_date.date())
+        else:
+            one_day_traffic_date.append(str2date(df.at[index-1, 'date']).date())
+        one_day_traffic.append(row['updown'])
+        break
+    
     # 日付のみを取得し、1日分のデータ通信量を求める
     # 一日のスタートはAM02:00からとする（L01の仕様っぽい）
-    day_time = datetime.time(2, 0, 0, 0)
+    day_time = datetime.time(4, 0, 0, 0)
     if current_date.hour != day_time.hour:
-        current_date_traffic.append(traffics[i])
+        current_date_traffic.append(row['updown'])
     else:
-        one_day_traffics.append(max(current_date_traffic))
+        one_day_traffic.append(max(current_date_traffic))
         # １日の通信量はAM02:00にリセットされるので日付を１日戻す
         today = current_date - datetime.timedelta(days=1)
-        one_day_traffics_date.append(today.date())
+        one_day_traffic_date.append(today.date())
         current_date_traffic = []
 
-three_days_traffic_from_the_day_before = sum(one_day_traffics)
-latest_three_days_traffic = sum(one_day_traffics)
+three_days_traffic_from_the_day_before = sum(one_day_traffic)
+latest_three_days_traffic = sum(one_day_traffic)
 
-if len(one_day_traffics) >= 4:
-    three_days_traffic_from_the_day_before = sum(one_day_traffics[-4:-1])
-if len(one_day_traffics) >= 3:
-    latest_three_days_traffic = sum(one_day_traffics[-3:])
+if len(one_day_traffic) >= 4:
+    three_days_traffic_from_the_day_before = sum(one_day_traffic[-4:-1])
+if len(one_day_traffic) >= 3:
+    latest_three_days_traffic = sum(one_day_traffic[-3:])
 
 three_days_traffic_from_the_day_before = round(three_days_traffic_from_the_day_before, 3)
 latest_three_days_traffic = round(latest_three_days_traffic, 3)
-datetime = [datetime.datetime.strptime(x, "%Y/%m/%d %H:%M:%S").strftime('%d日 %H時') for x in date]
+datetime = [str2date(x).strftime('%d日 %H時') for x in df['date']]
+
+app = dash.Dash()
 
 app.layout = html.Div(children=[
     html.H1('通信量'),
@@ -82,13 +81,13 @@ def update_graph(selected_graph):
     if selected_graph == 'hourly':
         return {
             'data':[
-                {'x':datetime, 'y':traffics}
+                {'x':datetime, 'y':df['updown']}
             ]
         }
     if selected_graph == 'daily':
         return {
             'data':[
-                {'x': one_day_traffics_date, 'y': one_day_traffics}
+                {'x': one_day_traffic_date, 'y': one_day_traffic}
             ],
             'layout':go.Layout(
                 xaxis={'tickformat': '%_m/%-d', 'dtick': 'D'}
