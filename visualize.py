@@ -27,7 +27,7 @@ for index, row in df.iterrows():
         break
     
     # 日付のみを取得し、1日分のデータ通信量を求める
-    # 一日のスタートはAM02:00からとする（L01の仕様っぽい）
+    # 一日のスタートはAM04:00からとする（L01の仕様っぽい）
     day_time = datetime.time(4, 0, 0, 0)
     if current_date.hour != day_time.hour:
         current_date_traffic.append(row['updown'])
@@ -38,24 +38,20 @@ for index, row in df.iterrows():
         one_day_traffic_date.append(today.date())
         current_date_traffic = []
 
-three_days_traffic_from_the_day_before = sum(one_day_traffic)
-latest_three_days_traffic = sum(one_day_traffic)
-
-if len(one_day_traffic) >= 4:
-    three_days_traffic_from_the_day_before = sum(one_day_traffic[-4:-1])
-if len(one_day_traffic) >= 3:
-    latest_three_days_traffic = sum(one_day_traffic[-3:])
+three_days_traffic_from_the_day_before = sum(one_day_traffic[-4:-1])
+latest_3days = sum(one_day_traffic[-3:])
 
 three_days_traffic_from_the_day_before = round(three_days_traffic_from_the_day_before, 3)
-latest_three_days_traffic = round(latest_three_days_traffic, 3)
+latest_3days = round(latest_3days, 3)
 datetime = [str2date(x).strftime('%d日 %H時') for x in df['date']]
 
+# 描画
 app = dash.Dash()
 
 app.layout = html.Div(children=[
     html.H1('通信量'),
 
-    html.Div('直近3日間の通信量：{} GB'.format(latest_three_days_traffic)),
+    html.Div('直近3日間の通信量：{} GB'.format(latest_3days)),
     html.Div('前日から3日間の通信量：{} GB'.format(three_days_traffic_from_the_day_before)),
 
     html.Div([
@@ -63,13 +59,14 @@ app.layout = html.Div(children=[
         dcc.Dropdown(
             id='change-graph',
             options=[
-                {'label':'hourly graph', 'value':'hourly'},
-                {'label':'daily graph', 'value':'daily'}
+                {'label':'Daily', 'value':'daily'},
+                {'label':'Three Days', 'value':'three'},
+                {'label':'Week', 'value':'week'}
             ],
-            value='hourly'
+            value='daily'
         )
     ],
-    style={'width':'50%'}),
+    style={'width':'35%'}),
 
     dcc.Graph(id='traffic-graph')
 ])
@@ -77,13 +74,8 @@ app.layout = html.Div(children=[
 @app.callback(
     dash.dependencies.Output('traffic-graph', 'figure'),
     [dash.dependencies.Input('change-graph', 'value')])
+
 def update_graph(selected_graph):
-    if selected_graph == 'hourly':
-        return {
-            'data':[
-                {'x':datetime, 'y':df['updown']}
-            ]
-        }
     if selected_graph == 'daily':
         return {
             'data':[
@@ -92,6 +84,20 @@ def update_graph(selected_graph):
             'layout':go.Layout(
                 xaxis={'tickformat': '%_m/%-d', 'dtick': 'D'}
             )
+        }
+    elif selected_graph == 'three':
+        return {
+            'data':[
+                {'x': one_day_traffic_date[-3:], 'y': one_day_traffic[-3:]}
+            ],
+            'layout':go.Layout(xaxis={'tickformat': '%_m/%-d', 'dtick': 'D'})
+        }
+    elif selected_graph == 'week':
+        return {
+            'data':[
+                {'x': one_day_traffic_date[-7:], 'y': one_day_traffic[-7:]}
+            ],
+            'layout':go.Layout(xaxis={'tickformat': '%_m/%-d', 'dtick': 'D'})
         }
 
 if __name__ == '__main__':
