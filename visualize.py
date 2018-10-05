@@ -33,26 +33,23 @@ for index, row in df.iterrows():
         current_date_traffic.append(row['updown'])
     else:
         one_day_traffic.append(max(current_date_traffic))
-        # １日の通信量はAM02:00にリセットされるので日付を１日戻す
+        # １日の通信量はAM04:00にリセットされるので日付を１日戻す
         today = current_date - datetime.timedelta(days=1)
         one_day_traffic_date.append(today.date())
         current_date_traffic = []
 
-three_days_traffic_from_the_day_before = sum(one_day_traffic[-4:-1])
-latest_3days = sum(one_day_traffic[-3:])
-
-three_days_traffic_from_the_day_before = round(three_days_traffic_from_the_day_before, 3)
-latest_3days = round(latest_3days, 3)
+from_yesterday_3days = round(sum(one_day_traffic[-4:-1]), 3)
+latest_3days = round(sum(one_day_traffic[-3:]), 3)
 datetime = [str2date(x).strftime('%d日 %H時') for x in df['date']]
 
 # 描画
 app = dash.Dash()
 
 app.layout = html.Div(children=[
-    html.H1('通信量'),
+    html.H1('トラフィック'),
 
-    html.Div('直近3日間の通信量：{} GB'.format(latest_3days)),
-    html.Div('前日から3日間の通信量：{} GB'.format(three_days_traffic_from_the_day_before)),
+    html.Div('今日含む3日間の通信量：{} GB'.format(latest_3days)),
+    html.Div('前日から3日間の通信量：{} GB'.format(from_yesterday_3days)),
 
     html.Div([
         html.Label('表示するグラフの選択'),
@@ -63,7 +60,7 @@ app.layout = html.Div(children=[
                 {'label':'Three Days', 'value':'three'},
                 {'label':'Week', 'value':'week'}
             ],
-            value='daily'
+            value='week'
         )
     ],
     style={'width':'35%'}),
